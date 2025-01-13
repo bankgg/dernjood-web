@@ -42,14 +42,16 @@
         </div>
     </div>
 
-    <div class="position-fixed top-0 end-0 m-3 d-flex align-items-center">
-        <label class="px-1">BPM</label>
-        <input type="email" class="form-control form-control-sm" id="bpm" style="width: 75px" value="50-70">
-        <button class="btn btn-sm btn-success ms-2" id="toggleMetronome">
-            START METRONOME
-        </button>
-        <button class="btn btn-sm btn-danger ms-2" id="toggleSound">
-            <i class="fa-solid fa-volume-high"></i>
+    <div class="position-fixed top-0 end-0 m-3 d-flex flex-column align-items-end ms-auto">
+        <div class="d-flex align-items-center">
+            <label class="px-1">BPM</label>
+            <input type="email" class="form-control form-control-sm" id="bpm" style="width: 75px" value="50-70">
+            <button class="btn btn-sm btn-success ms-2" id="toggleMetronome">
+                START METRONOME
+            </button>
+        </div>
+        <button class="btn btn-sm btn-danger mt-2" id="toggleSound">
+            SPEAK IS OFF
         </button>
     </div>
 
