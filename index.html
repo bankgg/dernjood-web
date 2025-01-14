@@ -1,481 +1,134 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dernjood by bankgg</title>
-    
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    
-    <!-- Custom CSS -->
-    <style>
-        #question, #answer, .card-header {
-            text-align: center;
-            width: 100%;
-        }
-
-        footer {
-            font-size: 0.8rem
-        }
-    </style>
-    <script src="https://kit.fontawesome.com/5a9a4bd7ad.js" crossorigin="anonymous"></script>
-</head>
-<body class="bg-light">
-    <!-- Main Content -->
-    <div class="container-fluid vh-100 d-flex justify-content-center align-items-center" id="main" style="flex-direction: column">
-        <div class="card" style="width: 100%;">
-            <div class="card-header">
-                Question (click on the text to speak out)
-            </div>
-            <div class="card-body" id="questionCard">
-                <h2 id="question"></h2>
-            </div>
-        </div>
-        <div class="card mt-3 mb-5" style="width: 100%;">
-            <div class="card-header">
-                Answer
-            </div>
-            <div class="card-body">
-                <h2 id="answer"></h2>
-            </div>
-        </div>
-    </div>
-
-    <div class="position-fixed top-0 end-0 m-3 d-flex flex-column align-items-end ms-auto">
-        <div class="d-flex align-items-center">
-            <label class="px-1">BPM</label>
-            <input type="email" class="form-control form-control-sm" id="bpm" style="width: 75px" value="50-70">
-            <button class="btn btn-sm btn-success ms-2" id="toggleMetronome">
-                START METRONOME
-            </button>
-        </div>
-        <button class="btn btn-sm btn-danger mt-2" id="toggleSound">
-            SPEAK IS OFF
-        </button>
-        <button class="btn btn-sm btn-secondary mt-2" id="randomImage">
-            RANDOM IMAGE
-        </button>
-    </div>
-
-     <!-- Footer -->
-     <footer class="position-fixed bottom-0 start-50 translate-middle-x py-3 w-100 text-center">
-        <p class="mb-0">(click on blank space to change the question)</p>
-    </footer>
-
-    <!-- Bootstrap Bundle with Popper -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-    
-    <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.7.1.slim.min.js" integrity="sha256-kmHvs0B+OpCW5GVHUNjv9rOmY0IvSIRcf7zGUDTDQM8=" crossorigin="anonymous"></script>
-
-    <!-- Custom JavaScript -->
-    <script>
-        let speak = false
-        let metronomeActive = false
-        let problem
-        let metronomeInterval
-        let audio = new Audio('knock.mp3');
-        let metronome
-        let currentImage = ''
-
-        $(document).ready(function() {
-            getRandomProblem()
-
-            $('#main').click(function(e) {
-                if (this !== e.target) {
-                    return
-                }
-
-                getRandomProblem()
-            })
-
-            $('#toggleSound').click(function() {
-                if (!speak) {
-                    speak = true
-                    $(this).removeClass('btn-danger').addClass('btn-success').text('SPEAK IS ON')
-                } else {
-                    speak = false
-                    $(this).removeClass('btn-success').addClass('btn-danger').text('SPEAK IS OFF')
-                }
-            })
-
-            $('#questionCard').click(function() {
-                if (speak) {
-                    speakSentence(problem.q)
-                }
-            })
-
-            $('#bpm').click(function() {
-                $(this).select()
-            })
-
-            $('#randomImage').click(function() {
-                const image = speakRandomImage()
-                $(this).text(`RANDOM IMAGE (${image})`)
-            })
-
-            $('#toggleMetronome').click(function() {
-                if (!metronome || !metronome.isActive()) {
-                    const split = $('#bpm').val().split('-')
-                    if (split.length === 1) {
-                        metronome = new Metronome(parseInt(split[0]), parseInt(split[0]))
-                    } else if (split.length === 2) {
-                        metronome = new Metronome(parseInt(split[0]), parseInt(split[1]))
-                    }
-
-                    // Start the metronome (default 120 BPM)
-                    metronome.start()
-                    this.timeout = setTimeout(() => metronome.randomBpm(), (Math.floor(Math.random() * (15 - 5 + 1)) + 5) * 1000)
-                    $(this).removeClass('btn-success').addClass('btn-danger').text('STOP METRONOME')
-                } else {
-                    metronome.stop()
-                    metronome = undefined
-                    $(this).removeClass('btn-danger').addClass('btn-success').text('START METRONOME')
-                }
-            })
-        })
-
-        function speakRandomImage() {
-            const images = [
-                'SQUARE',
-                'CIRCLE',
-                'TRIANGLE'
-            ]
-            let image = images[Math.floor(Math.random() * images.length)]
-
-            while (currentImage === image) {
-                image = images[Math.floor(Math.random() * images.length)]
-            }
-            currentImage = image
-            speakSentence(image)
-
-            return image
-        }
-
-        function getRandomProblem() {
-            const problemFunctions = [
-                () => generateMultiplicationCalculationProblem(80, 20),
-                () => generateTimeCalculationProblem(),
-                () => generateDivisionCalculationProblem(150, 9),
-                () => generateBackwardSpellingProblem()
-            ]
-            
-            problem = problemFunctions[Math.floor(Math.random() * problemFunctions.length)]()
-
-            $('#question').text(problem.q)
-            $('#answer').text(problem.a)
-
-            if (speak) {
-                speakSentence(problem.q)
-            }
-
-            return problem
-        }
-
-        function generateTimeCalculationProblem() {
-            const now = Math.floor(Math.random() * (1440))
-            const hour = Math.floor(now / 60)
-            const minute = now % 60
-            const timeText = convertToAmPm(hour.toString().padStart(2, '0') + ':' + minute.toString().padStart(2, '0'))
-            const longText = timeToWords(timeText)
-            const minutesToAdd = (Math.floor(Math.random() * (300 - 10 + 1)) + 10) * (Math.floor(Math.random() * 2) === 0 ? 1 : -1)
-            const answer = addMinutesToTime(timeText, minutesToAdd)
-            const questionTemplates = [
-                `now it's ${longText}. What time ${minutesToAdd < 0 ? 'was' : 'is'} the ${minutesToAdd < 0 ? 'last' : 'next'} ${numberToWords(Math.abs(minutesToAdd))} minutes?`,
-                `${longText}, ${minutesToAdd < 0 ? 'minus' : 'plus'} ${numberToWords(Math.abs(minutesToAdd))} minutes`,
-                `${minutesToAdd < 0 ? 'substract' : 'add'} ${numberToWords(Math.abs(minutesToAdd))} minutes, ${minutesToAdd < 0 ? 'from' : 'to'} ${longText}`
-            ]
-
-            return {
-                q: capitalizeFirstLetter(questionTemplates[Math.floor(Math.random() * questionTemplates.length)]),
-                a: answer
-            }
-        }
-
-        function generateBackwardSpellingProblem() {
-            const words = [
-                "AIRPORT", "RUNWAY", "COCKPIT", "FUSELAGE", "TURBINE", "JETSTREAM", "CONTROL", "AVIONICS", "PILOT",
-                "TOWER", "RADAR", "TURBULENCE", "ALTITUDE", "FLIGHT", "LANDING", "TAKEOFF",
-                "HEADING", "NAVIGATION", "CHART", "APPROACH", "DEPARTURE", "EMERGENCY", "SEATBELT", "SPEED", "WINGS", "ENGINE",
-                "THRUST", "PROPELLER", "TAXI", "CARGO", "AIRCRAFT", "ROTOR", "AVIATION", "PUSHBACK", "RUNWAY",
-                "FLAPS", "STABILIZER", "VECTOR", "ELEVATOR", "CARGO", "FLIGHTPATH", "WINGSPAN", "AERODYNAMICS"
-            ]
-
-            const selected = words[Math.floor(Math.random() * words.length)]
-            const answer = selected.split('').reverse().join('')
-
-            return {
-                q: `Spell "${selected}" backward`,
-                a: answer
-            }
-        }
-
-        function generateDivisionCalculationProblem(maxDividend, maxDivisor) {
-            // Ensure divisor is not zero
-            let divisor = Math.floor(Math.random() * maxDivisor) + 1
-            // Find a dividend that is evenly divisible by the divisor
-            let dividend = Math.floor(Math.random() * (maxDividend / divisor)) * divisor
-            const addition = (Math.floor(Math.random() * (80 - 5 + 1)) + 5) * (Math.floor(Math.random() * 2) === 0 ? 1 : -1)
-            const answer = dividend / divisor + addition
-
-            // Return the division problem and the result
-            return {
-                q: `${capitalizeFirstLetter(numberToWords(dividend))} divided by ${numberToWords(divisor)}, ${addition < 0 ? 'minus' : 'plus'} ${numberToWords(Math.abs(addition))}`,
-                a: `${answer} (${numberToWords(answer)})`
-            }
-        }
-
-        function generateMultiplicationCalculationProblem(maxMultiplier1, maxMultiplier2) {
-            const minMultiplier = 3
-            const multiplier1 = Math.floor(Math.random() * (maxMultiplier1 - minMultiplier + 1)) + minMultiplier
-            const multiplier2 = Math.floor(Math.random() * (maxMultiplier2 - minMultiplier + 1)) + minMultiplier
-            const addition = (Math.floor(Math.random() * (80 - 5 + 1)) + 5) * (Math.floor(Math.random() * 2) === 0 ? 1 : -1)
-            const answer = multiplier1 * multiplier2 + addition
-            const questionTemplates = [
-                `${numberToWords(multiplier1)} times ${numberToWords(multiplier2)}, ${addition < 0 ? 'minus' : 'plus'} ${numberToWords(Math.abs(addition))}`,
-                `${numberToWords(multiplier1)} multiplied by ${numberToWords(multiplier2)}, ${addition < 0 ? 'minus' : 'plus'} ${numberToWords(Math.abs(addition))}`
-            ]
-
-            return {
-                q: capitalizeFirstLetter(questionTemplates[Math.floor(Math.random() * questionTemplates.length)]),
-                a: `${answer} (${numberToWords(answer)})`
-            }
-        }
-
-        function capitalizeFirstLetter(sentence) {
-            if (sentence.length === 0) return sentence // Return empty string if input is empty
-            return sentence.charAt(0).toUpperCase() + sentence.slice(1)
-        }
-
-        function convertToAmPm(time) {
-            let [hours, minutes] = time.split(":").map(Number)
-
-            let period = hours >= 12 ? "PM" : "AM"
-            hours = hours % 12 || 12; // Convert 0 to 12 for midnight
-
-            return `${hours}:${minutes.toString().padStart(2, '0')} ${period}`
-        }
-
-        function addMinutesToTime(time, minutesToAdd) {
-            let [timePart, period] = time.split(" ")
-            let [hours, minutes] = timePart.split(":").map(Number)
-
-            // Convert to 24-hour format for easier calculation
-            if (period === "PM" && hours !== 12) {
-                hours += 12
-            }
-            if (period === "AM" && hours === 12) {
-                hours = 0
-            }
-
-            // Add minutes, including negative minutes
-            let totalMinutes = hours * 60 + minutes + minutesToAdd
-
-            // Handle crossing over midnight
-            if (totalMinutes < 0) {
-                totalMinutes = (1440 + totalMinutes) % 1440 // Wrap around using a full day (1440 minutes)
-            }
-
-            // Calculate new hours and minutes
-            let newHours = Math.floor(totalMinutes / 60) % 24
-            let newMinutes = totalMinutes % 60
-
-            // Convert back to 12-hour format
-            period = newHours >= 12 ? "PM" : "AM"
-            newHours = newHours % 12 || 12
-
-            // Format the minutes
-            newMinutes = newMinutes.toString().padStart(2, '0')
-
-            return `${newHours.toString().padStart(2, '0')}:${newMinutes} ${period}`
-        }
-
-        function timeToWords(time) {
-            const numbers = ["twelve", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven"]
-            const specialCases = {
-                15: "a quarter",
-                30: "half"
-            };
-
-            let [timePart, period] = time.split(" ");
-            let [hours, minutes] = timePart.split(":").map(Number)
-
-            // Convert to 12-hour format if necessary
-            period = period.toUpperCase()
-
-            let hourWord = numbers[hours % 12]
-            let nextHourWord = numbers[(hours % 12) + 1] || numbers[0]
-
-            if (minutes === 0) {
-                return `${hourWord} ${period}`
-            } else if (minutes === 15 || minutes === 30 || minutes === 45) {
-                let prefix = specialCases[minutes] || `${60 - minutes}`
-                let direction = minutes === 30 ? "past" : minutes < 30 ? "past" : "to"
-                return `${prefix} ${direction} ${minutes < 30 ? hourWord : nextHourWord} ${period}`
-            } else {
-                let minutesWord = minutes <= 30 ? `${minutes}` : `${60 - minutes}`
-                let direction = minutes <= 30 ? "past" : "to"
-                return `${numberToWords(minutesWord)} minutes ${direction} ${minutes <= 30 ? hourWord : nextHourWord} ${period}`
-            }
-        }
-
-        function numberToWords(num) {
-            if (num === 0) return "zero"
-
-            const ones = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"]
-            const teens = ["", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"]
-            const tens = ["", "ten", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"]
-            const thousands = ["", "thousand", "million", "billion"]
-
-            function convertToWords(n) {
-                if (n === 0) return ""
-                if (n < 10) return ones[n]
-                if (n >= 11 && n <= 19) return teens[n - 10]
-                if (n >= 10 && n < 100) {
-                    return tens[Math.floor(n / 10)] + (n % 10 !== 0 ? " " + ones[n % 10] : "")
-                }
-                if (n >= 100 && n < 1000) {
-                    return ones[Math.floor(n / 100)] + " hundred" + (n % 100 !== 0 ? " " + convertToWords(n % 100) : "")
-                }
-                
-                // Handle thousands and beyond
-                let thousandIndex = 0
-                let word = ''
-                
-                while (n > 0) {
-                    if (n % 1000 !== 0) {
-                        word = convertToWords(n % 1000) + " " + thousands[thousandIndex] + (word ? " " + word : "")
-                    }
-                    n = Math.floor(n / 1000)
-                    thousandIndex++
-                }
-
-                return word.trim()
-            }
-
-            // Check if the number is negative and prepend "minus"
-            const sign = num < 0 ? "minus " : "";
-
-            return sign + convertToWords(Math.abs(num));
-        }
-
-        function speakSentence(sentence) {
-            // Check if the browser supports the SpeechSynthesis API
-            if ('speechSynthesis' in window) {
-                const utterance = new SpeechSynthesisUtterance(sentence);
-                // Optionally set properties for voice, rate, pitch, and volume
-                utterance.voice = speechSynthesis.getVoices().find(voice => voice.lang === 'en-US');
-                utterance.rate = 0.7;  // Default speaking rate (1 is normal speed)
-                utterance.pitch = 1; // Default pitch
-                utterance.volume = 0.9; // Volume level (0 to 1)
-
-                // Speak the sentence
-                speechSynthesis.speak(utterance);
-            } else {
-                alert("Text-to-Speech is not supported in your browser.");
-            }
-        }
-
-        class Metronome {
-            constructor(minBpm, maxBpm) {
-                this.audioContext = null;
-                this.currentBpm = null;
-                this.isPlaying = false;
-                this.intervalId = null;
-                this.minBpm = minBpm
-                this.maxBpm = maxBpm
-                this.timeout = undefined
-            }
-
-            initialize() {
-                // Initialize audio context on user interaction
-                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                this.randomBpm()
-            }
-
-            randomBpm() {
-                if (this.minBpm === this.maxBpm) {
-                    this.currentBpm = this.minBpm
-                    return
-                }
-
-                this.setBpm(Math.floor(Math.random() * (this.maxBpm - this.minBpm + 1)) + this.minBpm)
-            }
-
-            // Create a single tick sound
-            createTickSound() {
-                const oscillator = this.audioContext.createOscillator();
-                const gainNode = this.audioContext.createGain();
-
-                oscillator.connect(gainNode);
-                gainNode.connect(this.audioContext.destination);
-
-                oscillator.frequency.value = 1000; // Frequency in hertz
-                gainNode.gain.value = 1;
-
-                // Quick fade out for a crisp tick sound
-                gainNode.gain.exponentialRampToValueAtTime(
-                    0.001,
-                    this.audioContext.currentTime + 0.05
-                );
-
-                oscillator.start();
-                oscillator.stop(this.audioContext.currentTime + 0.05);
-            }
-
-            start() {
-                if (!this.audioContext) {
-                    this.initialize();
-                }
-
-                if (this.isPlaying) return;
-
-                this.isPlaying = true;
-                const intervalMs = (60 / this.currentBpm) * 1000;
-
-                // Create first tick immediately
-                this.createTickSound();
-
-                // Set up interval for subsequent ticks
-                this.intervalId = setInterval(() => {
-                    this.createTickSound();
-                }, intervalMs);
-            }
-
-            stop() {
-                if (!this.isPlaying) return;
-
-                clearInterval(this.intervalId);
-                this.isPlaying = false;
-                clearTimeout(this.timeout)
-            }
-
-            async setBpm(bpm) {
-                if (bpm < 30 || bpm > 300) {
-                    throw new Error('BPM must be between 30 and 300');
-                }
-
-                this.currentBpm = bpm;
-
-                // If already playing, restart with new BPM
-                if (this.isPlaying) {
-                    this.stop();
-                    await new Promise(r => setTimeout(r, 900));
-                    this.start();
-
-                    this.timeout = setTimeout(() => this.randomBpm(), (Math.floor(Math.random() * (15 - 5 + 1)) + 5) * 1000)
-                }
-            }
-
-            getCurrentBpm() {
-                return this.currentBpm;
-            }
-
-            isActive() {
-                return this.isActive
-            }
-        }
-    </script>
-</body>
-</html>
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Dernjood by bankgg</title><!-- Bootstrap CSS --><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous"><!-- Custom CSS --><style>#question,#answer,.card-header{text-align:center;width:100%}
+footer{font-size:0.8rem}</style></head><body class="bg-light"><!-- Main Content --><div class="container-fluid vh-100 d-flex justify-content-center align-items-center" id="main" style="flex-direction: column"><div class="card" style="width: 100%;"><div class="card-header">Question(click on the text to speak out)</div><div class="card-body" id="questionCard"><h2 id="question"></h2></div></div><div class="card mt-3 mb-5" style="width: 100%;"><div class="card-header">Answer</div><div class="card-body"><h2 id="answer"></h2></div></div></div><div class="position-fixed top-0 end-0 m-3 d-flex flex-column align-items-end ms-auto"><div class="d-flex align-items-center"><label class="px-1">BPM</label><input type="email" class="form-control form-control-sm" id="bpm" style="width: 75px" value="50-70"><button class="btn btn-sm btn-success ms-2" id="toggleMetronome">START METRONOME</button></div><button class="btn btn-sm btn-danger mt-2" id="toggleSound">SPEAK IS OFF</button><button class="btn btn-sm btn-secondary mt-2" id="randomImage">RANDOM IMAGE</button></div><!-- Footer --><footer class="position-fixed bottom-0 start-50 translate-middle-x py-3 w-100 text-center"><p class="mb-0">(click on blank space to change the question)</p></footer><!-- Bootstrap Bundle with Popper --><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script><!-- jQuery --><script src="https://code.jquery.com/jquery-3.7.1.slim.min.js" integrity="sha256-kmHvs0B+OpCW5GVHUNjv9rOmY0IvSIRcf7zGUDTDQM8=" crossorigin="anonymous"></script><!-- Custom JavaScript --><script>let speak=!1
+let metronomeActive=!1
+let problem
+let metronome
+let currentImage=''
+let speakRate=0.7
+$(document).ready(function(){getRandomProblem()
+$('#main').click(function(e){if(this!==e.target){return}
+getRandomProblem()})
+$('#toggleSound').click(function(){if(!speak){speak=!0
+$(this).removeClass('btn-danger').addClass('btn-success').text('SPEAK IS ON')}else{speak=!1
+$(this).removeClass('btn-success').addClass('btn-danger').text('SPEAK IS OFF')}})
+$('#questionCard').click(function(){if(speak){speakSentence(problem.q,speakRate)
+if(speakRate<=0.2){return}
+speakRate-=0.2}})
+$('#bpm').click(function(){$(this).select()})
+$('#randomImage').click(function(){const image=speakRandomImage()
+$(this).text(`RANDOM IMAGE (${image})`)})
+$('#toggleMetronome').click(function(){const val=$('#bpm').val()
+if(!validateNumberFormat(val)){alert('BPM must be a single number (x) or a range (x-y) ranging between 30-300.')
+return}
+if(!metronome||!metronome.isActive()){const split=val.split('-')
+if(split.length===1){metronome=new Metronome(parseInt(split[0]),parseInt(split[0]))}else if(split.length===2){metronome=new Metronome(parseInt(split[0]),parseInt(split[1]))}
+metronome.start()
+metronome.setMetronomeTimeout(setTimeout(()=>metronome.randomBpm(),(Math.floor(Math.random()*(15-5+1))+5)*1000))
+$(this).removeClass('btn-success').addClass('btn-danger').text('STOP METRONOME')}else{metronome.stop()
+metronome=undefined
+$(this).removeClass('btn-danger').addClass('btn-success').text('START METRONOME')}})})
+function speakRandomImage(){const images=['SQUARE','CIRCLE','TRIANGLE']
+let image=images[Math.floor(Math.random()*images.length)]
+while(currentImage===image){image=images[Math.floor(Math.random()*images.length)]}
+currentImage=image
+speakSentence(image,0.6)
+return image}
+function getRandomProblem(){speakRate=0.7
+const problemFunctions=[()=>generateMultiplicationCalculationProblem(80,20),()=>generateTimeCalculationProblem(),()=>generateDivisionCalculationProblem(150,9),()=>generateBackwardSpellingProblem()]
+problem=problemFunctions[Math.floor(Math.random()*problemFunctions.length)]()
+$('#question').text(problem.q)
+$('#answer').text(problem.a)
+if(speak){speakSentence(problem.q)}
+return problem}
+function generateTimeCalculationProblem(){const now=Math.floor(Math.random()*(1440))
+const hour=Math.floor(now/60)
+const minute=now%60
+const timeText=convertToAmPm(hour.toString().padStart(2,'0')+':'+minute.toString().padStart(2,'0'))
+const longText=timeToWords(timeText)
+const minutesToAdd=(Math.floor(Math.random()*(300-10+1))+10)*(Math.floor(Math.random()*2)===0?1:-1)
+const answer=addMinutesToTime(timeText,minutesToAdd)
+const questionTemplates=[`now it's ${longText}. What time ${minutesToAdd < 0 ? 'was' : 'is'} the ${minutesToAdd < 0 ? 'last' : 'next'} ${numberToWords(Math.abs(minutesToAdd))} minutes?`,`${longText}, ${minutesToAdd < 0 ? 'minus' : 'plus'} ${numberToWords(Math.abs(minutesToAdd))} minutes`,`${minutesToAdd < 0 ? 'substract' : 'add'} ${numberToWords(Math.abs(minutesToAdd))} minutes, ${minutesToAdd < 0 ? 'from' : 'to'} ${longText}`]
+return{q:capitalizeFirstLetter(questionTemplates[Math.floor(Math.random()*questionTemplates.length)]),a:answer}}
+function generateBackwardSpellingProblem(){const words=["AIRPORT","RUNWAY","COCKPIT","FUSELAGE","TURBINE","JETSTREAM","CONTROL","AVIONICS","PILOT","TOWER","RADAR","TURBULENCE","ALTITUDE","FLIGHT","LANDING","TAKEOFF","HEADING","NAVIGATION","CHART","APPROACH","DEPARTURE","EMERGENCY","SEATBELT","SPEED","WINGS","ENGINE","THRUST","PROPELLER","TAXI","CARGO","AIRCRAFT","ROTOR","AVIATION","PUSHBACK","RUNWAY","FLAPS","STABILIZER","VECTOR","ELEVATOR","CARGO","FLIGHTPATH","WINGSPAN","AERODYNAMICS"]
+const selected=words[Math.floor(Math.random()*words.length)]
+const answer=selected.split('').reverse().join('')
+return{q:`Spell "${selected}" backward`,a:answer}}
+function generateDivisionCalculationProblem(maxDividend,maxDivisor){let divisor=Math.floor(Math.random()*maxDivisor)+1
+let dividend=Math.floor(Math.random()*(maxDividend/divisor))*divisor
+const addition=(Math.floor(Math.random()*(80-5+1))+5)*(Math.floor(Math.random()*2)===0?1:-1)
+const answer=dividend/divisor+addition
+return{q:`${capitalizeFirstLetter(numberToWords(dividend))} divided by ${numberToWords(divisor)}, ${addition < 0 ? 'minus' : 'plus'} ${numberToWords(Math.abs(addition))}`,a:`${answer} (${numberToWords(answer)})`}}
+function generateMultiplicationCalculationProblem(maxMultiplier1,maxMultiplier2){const minMultiplier=3
+const multiplier1=Math.floor(Math.random()*(maxMultiplier1-minMultiplier+1))+minMultiplier
+const multiplier2=Math.floor(Math.random()*(maxMultiplier2-minMultiplier+1))+minMultiplier
+const addition=(Math.floor(Math.random()*(80-5+1))+5)*(Math.floor(Math.random()*2)===0?1:-1)
+const answer=multiplier1*multiplier2+addition
+const questionTemplates=[`${numberToWords(multiplier1)} times ${numberToWords(multiplier2)}, ${addition < 0 ? 'minus' : 'plus'} ${numberToWords(Math.abs(addition))}`,`${numberToWords(multiplier1)} multiplied by ${numberToWords(multiplier2)}, ${addition < 0 ? 'minus' : 'plus'} ${numberToWords(Math.abs(addition))}`]
+return{q:capitalizeFirstLetter(questionTemplates[Math.floor(Math.random()*questionTemplates.length)]),a:`${answer} (${numberToWords(answer)})`}}
+function capitalizeFirstLetter(sentence){if(sentence.length===0)return sentence
+return sentence.charAt(0).toUpperCase()+sentence.slice(1)}
+function convertToAmPm(time){let[hours,minutes]=time.split(":").map(Number)
+let period=hours>=12?"PM":"AM"
+hours=hours%12||12;return `${hours}:${minutes.toString().padStart(2, '0')} ${period}`}
+function addMinutesToTime(time,minutesToAdd){let[timePart,period]=time.split(" ")
+let[hours,minutes]=timePart.split(":").map(Number)
+if(period==="PM"&&hours!==12){hours+=12}
+if(period==="AM"&&hours===12){hours=0}
+let totalMinutes=hours*60+minutes+minutesToAdd
+if(totalMinutes<0){totalMinutes=(1440+totalMinutes)%1440}
+let newHours=Math.floor(totalMinutes/60)%24
+let newMinutes=totalMinutes%60
+period=newHours>=12?"PM":"AM"
+newHours=newHours%12||12
+newMinutes=newMinutes.toString().padStart(2,'0')
+return `${newHours.toString().padStart(2, '0')}:${newMinutes} ${period}`}
+function timeToWords(time){const numbers=["twelve","one","two","three","four","five","six","seven","eight","nine","ten","eleven"]
+const specialCases={15:"a quarter",30:"half"};let[timePart,period]=time.split(" ");let[hours,minutes]=timePart.split(":").map(Number)
+period=period.toUpperCase()
+let hourWord=numbers[hours%12]
+let nextHourWord=numbers[(hours%12)+1]||numbers[0]
+if(minutes===0){return `${hourWord} ${period}`}else if(minutes===15||minutes===30||minutes===45){let prefix=specialCases[minutes]||`${60 - minutes}`
+let direction=minutes===30?"past":minutes<30?"past":"to"
+return `${prefix} ${direction} ${minutes < 30 ? hourWord : nextHourWord} ${period}`}else{let minutesWord=minutes<=30?`${minutes}`:`${60 - minutes}`
+let direction=minutes<=30?"past":"to"
+return `${numberToWords(minutesWord)} minutes ${direction} ${minutes <= 30 ? hourWord : nextHourWord} ${period}`}}
+function numberToWords(num){if(num===0)return"zero"
+const ones=["","one","two","three","four","five","six","seven","eight","nine"]
+const teens=["","eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen"]
+const tens=["","ten","twenty","thirty","forty","fifty","sixty","seventy","eighty","ninety"]
+const thousands=["","thousand","million","billion"]
+function convertToWords(n){if(n===0)return""
+if(n<10)return ones[n]
+if(n>=11&&n<=19)return teens[n-10]
+if(n>=10&&n<100){return tens[Math.floor(n/10)]+(n%10!==0?" "+ones[n%10]:"")}
+if(n>=100&&n<1000){return ones[Math.floor(n/100)]+" hundred"+(n%100!==0?" "+convertToWords(n%100):"")}
+let thousandIndex=0
+let word=''
+while(n>0){if(n%1000!==0){word=convertToWords(n%1000)+" "+thousands[thousandIndex]+(word?" "+word:"")}
+n=Math.floor(n/1000)
+thousandIndex++}
+return word.trim()}
+const sign=num<0?"minus ":"";return sign+convertToWords(Math.abs(num))}
+function speakSentence(sentence,rate=0.7){if('speechSynthesis' in window){const utterance=new SpeechSynthesisUtterance(sentence);utterance.voice=speechSynthesis.getVoices().find(voice=>voice.lang==='en-US');utterance.rate=rate;utterance.pitch=1;utterance.volume=0.9;speechSynthesis.speak(utterance)}else{alert("Text-to-Speech is not supported in your browser.")}}
+function validateNumberFormat(input){const regex=/^(\d{2,3})(?:-(\d{2,3}))?$/;const match=input.match(regex);if(!match){return!1}
+const number1=parseInt(match[1],10);const number2=match[2]?parseInt(match[2],10):null;if(number1<30||number1>300){return!1}
+if(number2!==null){if(number2<30||number2>300){return!1}
+if(number2<number1){return!1}}
+return!0}
+class Metronome{constructor(minBpm,maxBpm){this.audioContext=null;this.currentBpm=null;this.isPlaying=!1;this.intervalId=null;this.minBpm=minBpm
+this.maxBpm=maxBpm
+this.timeout=undefined}
+initialize(){this.audioContext=new(window.AudioContext||window.webkitAudioContext)();this.randomBpm()}
+randomBpm(){if(this.minBpm===this.maxBpm){this.currentBpm=this.minBpm
+return}
+this.setBpm(Math.floor(Math.random()*(this.maxBpm-this.minBpm+1))+this.minBpm)}
+createTickSound(){const oscillator=this.audioContext.createOscillator();const gainNode=this.audioContext.createGain();oscillator.connect(gainNode);gainNode.connect(this.audioContext.destination);oscillator.frequency.value=1000;gainNode.gain.value=1;gainNode.gain.exponentialRampToValueAtTime(0.001,this.audioContext.currentTime+0.05);oscillator.start();oscillator.stop(this.audioContext.currentTime+0.05)}
+start(){if(!this.audioContext){this.initialize()}
+if(this.isPlaying)return;this.isPlaying=!0;const intervalMs=(60/this.currentBpm)*1000;this.createTickSound();this.intervalId=setInterval(()=>{this.createTickSound()},intervalMs)}
+setMetronomeTimeout(timeout){this.timeout=timeout}
+clearMetronomeTimeout(){clearTimeout(this.timeout)}
+stop(){if(!this.isPlaying)return;clearInterval(this.intervalId);this.isPlaying=!1;this.clearMetronomeTimeout()}
+async setBpm(bpm){if(bpm<30||bpm>300){throw new Error('BPM must be between 30 and 300')}
+this.currentBpm=bpm;if(this.isPlaying){this.stop();await new Promise(r=>setTimeout(r,900));this.start();this.setMetronomeTimeout(setTimeout(()=>this.randomBpm(),(Math.floor(Math.random()*(15-5+1))+5)*1000))}}
+getCurrentBpm(){return this.currentBpm}
+isActive(){return this.isActive}}</script></body></html>
