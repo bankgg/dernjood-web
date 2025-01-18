@@ -1,1 +1,730 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dernjood by bankgg</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous"><style>#answer,#question,.card-header{text-align:center;width:100%}footer{font-size:.8rem}</style></head><body class="bg-light"><div class="container-fluid vh-100 d-flex justify-content-center align-items-center" id="main" style="flex-direction:column"><div class="card" style="width:100%"><div class="card-header">Question (click on the text to speak out)</div><div class="card-body" id="questionCard"><h2 id="question"></h2></div></div><div class="card mt-3 mb-5" style="width:100%"><div class="card-header">Answer</div><div class="card-body"><h2 id="answer"></h2></div></div></div><div class="position-fixed top-0 end-0 m-3 d-flex flex-column align-items-end ms-auto"><div class="d-flex align-items-center"><label class="px-1">BPM</label><input type="email" class="form-control form-control-sm" id="bpm" style="width:75px" value="50-70"><button class="btn btn-sm btn-success ms-2" id="toggleMetronome">START METRONOME</button></div><button class="btn btn-sm btn-danger mt-2" id="toggleSound">SPEAK IS OFF</button><button class="btn btn-sm btn-secondary mt-2" id="randomImage">RANDOM IMAGE</button></div><footer class="position-fixed bottom-0 start-50 translate-middle-x py-3 w-100 text-center"><p class="mb-0">(click on blank space to change the question)</p></footer><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script><script src="https://code.jquery.com/jquery-3.7.1.slim.min.js" integrity="sha256-kmHvs0B+OpCW5GVHUNjv9rOmY0IvSIRcf7zGUDTDQM8=" crossorigin="anonymous"></script><script>let speak=!1,metronomeActive=!1,problem,metronome,currentImage="",speakRate=.7;function speakRandomImage(){var t=["SQUARE","CIRCLE","TRIANGLE"];let e=t[Math.floor(Math.random()*t.length)];for(;currentImage===e;)e=t[Math.floor(Math.random()*t.length)];return speakSentence(currentImage=e,.6),e}function getRandomProblem(){speakRate=.7;var t=[()=>generateMultiplicationCalculationProblem(80,20),()=>generateTimeCalculationProblem(),()=>generateDivisionCalculationProblem(150,9),()=>generateBackwardSpellingProblem()];return problem=t[Math.floor(Math.random()*t.length)](),$("#question").text(problem.q),$("#answer").text(problem.a),speak&&speakSentence(problem.q),problem}function generateTimeCalculationProblem(){var t=Math.floor(1440*Math.random()),e=t%60,t=convertToAmPm(Math.floor(t/60).toString().padStart(2,"0")+":"+e.toString().padStart(2,"0")),e=timeToWords(t),n=(Math.floor(291*Math.random())+10)*(0===Math.floor(2*Math.random())?1:-1),t=addMinutesToTime(t,n),n=[`now it's ${e}. What time ${n<0?"was":"is"} the ${n<0?"last":"next"} ${numberToWords(Math.abs(n))} minutes?`,`${e}, ${n<0?"minus":"plus"} ${numberToWords(Math.abs(n))} minutes`,`${n<0?"substract":"add"} ${numberToWords(Math.abs(n))} minutes, ${n<0?"from":"to"} `+e];return{q:capitalizeFirstLetter(n[Math.floor(Math.random()*n.length)]),a:t}}function generateBackwardSpellingProblem(){var t=["AIRPORT","RUNWAY","COCKPIT","FUSELAGE","TURBINE","JETSTREAM","CONTROL","AVIONICS","PILOT","TOWER","RADAR","TURBULENCE","ALTITUDE","FLIGHT","LANDING","TAKEOFF","HEADING","NAVIGATION","CHART","APPROACH","DEPARTURE","EMERGENCY","SEATBELT","SPEED","WINGS","ENGINE","THRUST","PROPELLER","TAXI","CARGO","AIRCRAFT","ROTOR","AVIATION","PUSHBACK","RUNWAY","FLAPS","STABILIZER","VECTOR","ELEVATOR","CARGO","FLIGHTPATH","WINGSPAN","AERODYNAMICS"],t=t[Math.floor(Math.random()*t.length)],e=t.split("").reverse().join("");return{q:`Spell "${t}" backward`,a:e}}function generateDivisionCalculationProblem(t,e){var e=Math.floor(Math.random()*e)+1,t=Math.floor(Math.random()*(t/e))*e,n=(Math.floor(76*Math.random())+5)*(0===Math.floor(2*Math.random())?1:-1),r=t/e+n;return{q:`${capitalizeFirstLetter(numberToWords(t))} divided by ${numberToWords(e)}, ${n<0?"minus":"plus"} `+numberToWords(Math.abs(n)),a:`${r} (${numberToWords(r)})`}}function generateMultiplicationCalculationProblem(t,e){var t=Math.floor(Math.random()*(t-3+1))+3,e=Math.floor(Math.random()*(e-3+1))+3,n=(Math.floor(76*Math.random())+5)*(0===Math.floor(2*Math.random())?1:-1),r=t*e+n,t=[`${numberToWords(t)} times ${numberToWords(e)}, ${n<0?"minus":"plus"} `+numberToWords(Math.abs(n)),`${numberToWords(t)} multiplied by ${numberToWords(e)}, ${n<0?"minus":"plus"} `+numberToWords(Math.abs(n))];return{q:capitalizeFirstLetter(t[Math.floor(Math.random()*t.length)]),a:`${r} (${numberToWords(r)})`}}function capitalizeFirstLetter(t){return 0===t.length?t:t.charAt(0).toUpperCase()+t.slice(1)}function convertToAmPm(t){var[t,e]=t.split(":").map(Number),n=12<=t?"PM":"AM";return`${t%12||12}:${e.toString().padStart(2,"0")} `+n}function addMinutesToTime(t,e){var[t,n]=t.split(" ");let[r,o]=t.split(":").map(Number),a=("PM"===n&&12!==r&&(r+=12),60*(r="AM"===n&&12===r?0:r)+o+e);a<0&&(a=(1440+a)%1440);t=Math.floor(a/60)%24;let i=a%60;return n=12<=t?"PM":"AM",t=t%12||12,i=i.toString().padStart(2,"0"),`${t.toString().padStart(2,"0")}:${i} `+n}function timeToWords(t){var e=["twelve","one","two","three","four","five","six","seven","eight","nine","ten","eleven"];let[n,r]=t.split(" ");var[t,o]=n.split(":").map(Number),a=(r=r.toUpperCase(),e[t%12]),t=e[t%12+1]||e[0];return 0===o?a+" "+r:15===o||30===o||45===o?({15:"a quarter",30:"half"}[o]||""+(60-o))+` ${30===o||o<30?"past":"to"} ${o<30?a:t} `+r:(e=o<=30?"past":"to",numberToWords(o<=30?""+o:""+(60-o))+` minutes ${e} ${o<=30?a:t} `+r)}function numberToWords(t){if(0===t)return"zero";let o=["","one","two","three","four","five","six","seven","eight","nine"],a=["","eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen"],i=["","ten","twenty","thirty","forty","fifty","sixty","seventy","eighty","ninety"],s=["","thousand","million","billion"];return(t<0?"minus ":"")+function t(e){if(0===e)return"";if(e<10)return o[e];if(11<=e&&e<=19)return a[e-10];if(10<=e&&e<100)return i[Math.floor(e/10)]+(e%10!=0?" "+o[e%10]:"");if(100<=e&&e<1e3)return o[Math.floor(e/100)]+" hundred"+(e%100!=0?" "+t(e%100):"");let n=0,r="";for(;0<e;)e%1e3!=0&&(r=t(e%1e3)+" "+s[n]+(r?" "+r:"")),e=Math.floor(e/1e3),n++;return r.trim()}(Math.abs(t))}function speakSentence(t,e=.7){"speechSynthesis"in window?((t=new SpeechSynthesisUtterance(t)).voice=speechSynthesis.getVoices().find(t=>"en-US"===t.lang),t.rate=e,t.pitch=1,t.volume=.9,speechSynthesis.speak(t)):alert("Text-to-Speech is not supported in your browser.")}function validateNumberFormat(t){t=t.match(/^(\d{2,3})(?:-(\d{2,3}))?$/);if(!t)return!1;var e=parseInt(t[1],10),t=t[2]?parseInt(t[2],10):null;if(e<30||300<e)return!1;if(null!==t){if(t<30||300<t)return!1;if(t<e)return!1}return!0}$(document).ready(function(){getRandomProblem(),$("#main").click(function(t){this===t.target&&getRandomProblem()}),$("#toggleSound").click(function(){speak?(speak=!1,$(this).removeClass("btn-success").addClass("btn-danger").text("SPEAK IS OFF")):(speak=!0,$(this).removeClass("btn-danger").addClass("btn-success").text("SPEAK IS ON"))}),$("#questionCard").click(function(){speak&&(speakSentence(problem.q,speakRate),speakRate<=.2||(speakRate-=.2))}),$("#bpm").click(function(){$(this).select()}),$("#randomImage").click(function(){var t=speakRandomImage();$(this).text(`RANDOM IMAGE (${t})`)}),$("#toggleMetronome").click(function(){var t=$("#bpm").val();validateNumberFormat(t)?metronome&&metronome.isActive()?(metronome.stop(),metronome=void 0,$(this).removeClass("btn-danger").addClass("btn-success").text("START METRONOME")):(1===(t=t.split("-")).length?metronome=new Metronome(parseInt(t[0]),parseInt(t[0])):2===t.length&&(metronome=new Metronome(parseInt(t[0]),parseInt(t[1]))),metronome.start(),metronome.setMetronomeTimeout(setTimeout(()=>metronome.randomBpm(),1e3*(Math.floor(11*Math.random())+5))),$(this).removeClass("btn-success").addClass("btn-danger").text("STOP METRONOME")):alert("BPM must be a single number (x) or a range (x-y) ranging between 30-300.")})});class Metronome{constructor(t,e){this.audioContext=null,this.currentBpm=null,this.isPlaying=!1,this.intervalId=null,this.minBpm=t,this.maxBpm=e,this.timeout=void 0}initialize(){this.audioContext=new(window.AudioContext||window.webkitAudioContext),this.randomBpm()}randomBpm(){this.minBpm===this.maxBpm?this.currentBpm=this.minBpm:this.setBpm(Math.floor(Math.random()*(this.maxBpm-this.minBpm+1))+this.minBpm)}createTickSound(){var t=this.audioContext.createOscillator(),e=this.audioContext.createGain();t.connect(e),e.connect(this.audioContext.destination),t.frequency.value=1e3,e.gain.value=1,e.gain.exponentialRampToValueAtTime(.001,this.audioContext.currentTime+.05),t.start(),t.stop(this.audioContext.currentTime+.05)}start(){var t;this.audioContext||this.initialize(),this.isPlaying||(this.isPlaying=!0,t=60/this.currentBpm*1e3,this.createTickSound(),this.intervalId=setInterval(()=>{this.createTickSound()},t))}setMetronomeTimeout(t){this.timeout=t}clearMetronomeTimeout(){clearTimeout(this.timeout)}stop(){this.isPlaying&&(clearInterval(this.intervalId),this.isPlaying=!1,this.clearMetronomeTimeout())}async setBpm(t){if(t<30||300<t)throw new Error("BPM must be between 30 and 300");this.currentBpm=t,this.isPlaying&&(this.stop(),await new Promise(t=>setTimeout(t,900)),this.start(),this.setMetronomeTimeout(setTimeout(()=>this.randomBpm(),1e3*(Math.floor(11*Math.random())+5))))}getCurrentBpm(){return this.currentBpm}isActive(){return this.isActive}}</script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dernjood by bankgg</title>
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
+    <!-- Custom CSS -->
+    <style>
+      #question,
+      #answer,
+      .card-header {
+        text-align: center;
+        width: 100%;
+      }
+      footer {
+        font-size: 0.8rem;
+      }
+    </style>
+  </head>
+  <body class="bg-light">
+    <!-- Main Content -->
+    <div
+      class="container-fluid vh-100 d-flex justify-content-center align-items-center"
+      id="main"
+      style="flex-direction: column"
+    >
+      <div class="card" style="width: 100%">
+        <div class="card-header">Question (click on the text to speak out)</div>
+        <div class="card-body" id="questionCard"><h2 id="question"></h2></div>
+      </div>
+      <div class="card mt-3 mb-5" style="width: 100%">
+        <div class="card-header">Answer</div>
+        <div class="card-body"><h2 id="answer"></h2></div>
+      </div>
+    </div>
+    <div
+      class="position-fixed top-0 end-0 m-3 d-flex flex-column align-items-end ms-auto"
+    >
+      <div class="d-flex align-items-center">
+        <label class="px-1">BPM</label
+        ><input
+          type="email"
+          class="form-control form-control-sm"
+          id="bpm"
+          style="width: 75px"
+          value="45-60"
+        /><button class="btn btn-sm btn-success ms-2" id="toggleMetronome">
+          START METRONOME
+        </button>
+      </div>
+      <button class="btn btn-sm btn-danger mt-2" id="toggleSound">
+        SPEAK IS OFF</button
+      ><button class="btn btn-sm btn-secondary mt-2" id="randomImage">
+        RANDOM IMAGE
+      </button>
+      <button class="btn btn-sm btn-primary mt-2" id="toggleAutoBtn">
+        START AUTO
+      </button>
+    </div>
+    <!-- Footer -->
+    <footer
+      class="position-fixed bottom-0 start-50 translate-middle-x py-3 w-100 text-center"
+    >
+      <p class="mb-0">(click on blank space to change the question)</p>
+    </footer>
+    <!-- Bootstrap Bundle with Popper -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+      crossorigin="anonymous"
+    ></script>
+    <!-- jQuery -->
+    <script
+      src="https://code.jquery.com/jquery-3.7.1.slim.min.js"
+      integrity="sha256-kmHvs0B+OpCW5GVHUNjv9rOmY0IvSIRcf7zGUDTDQM8="
+      crossorigin="anonymous"
+    ></script>
+    <!-- Custom JavaScript -->
+    <script>
+      let speak = !1;
+      let metronomeActive = !1;
+      let problem;
+      let metronome;
+      let currentImage = "";
+      let speakRate = 0.7;
+      const recognition = new webkitSpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = false;
+      recognition.lang = "en-US";
+      let isListening = false;
+      let isSpeaking = false;
+      let randomImageTimeout
+
+      $(document).ready(async function () {
+        setupSpeechRecognition("next", async function () {
+          await speakSentence("The answer is: ");
+          await sleep(1000);
+          await speakSentence(cleanAnswer($("#answer").text()), 0.5);
+          await sleep(Math.floor(Math.random() * (15000 - 3000 + 1)) + 3000);
+          await speakSentence("Next question");
+          await sleep(1100);
+          if (isListening) {
+            getRandomProblem();
+          }
+        });
+        getRandomProblem();
+        $("#main").click(function (e) {
+          if (this !== e.target) {
+            return;
+          }
+          getRandomProblem();
+        });
+        $("#toggleSound").click(function () {
+          if (!speak) {
+            speak = !0;
+            $(this)
+              .removeClass("btn-danger")
+              .addClass("btn-success")
+              .text("SPEAK IS ON");
+          } else {
+            speak = !1;
+            $(this)
+              .removeClass("btn-success")
+              .addClass("btn-danger")
+              .text("SPEAK IS OFF");
+          }
+        });
+        $("#questionCard").click(function () {
+          if (speak) {
+            speakSentence(problem.q, speakRate);
+            if (speakRate <= 0.2) {
+              return;
+            }
+            speakRate -= 0.2;
+          }
+        });
+        $("#bpm").click(function () {
+          $(this).select();
+        });
+        $("#randomImage").click(function () {
+          const image = speakRandomImage();
+          $(this).text(`RANDOM IMAGE (${image})`);
+        });
+        $("#toggleMetronome").click(function () {
+          const val = $("#bpm").val();
+          if (!validateNumberFormat(val)) {
+            alert(
+              "BPM must be a single number (x) or a range (x-y) ranging between 30-300."
+            );
+            return;
+          }
+          if (!metronome || !metronome.isActive()) {
+            const split = val.split("-");
+            if (split.length === 1) {
+              metronome = new Metronome(parseInt(split[0]), parseInt(split[0]));
+            } else if (split.length === 2) {
+              metronome = new Metronome(parseInt(split[0]), parseInt(split[1]));
+            }
+            metronome.start();
+            metronome.setMetronomeTimeout(
+              setTimeout(
+                () => metronome.randomBpm(),
+                (Math.floor(Math.random() * (15 - 5 + 1)) + 5) * 1000
+              )
+            );
+            $(this)
+              .removeClass("btn-success")
+              .addClass("btn-danger")
+              .text("STOP METRONOME");
+          } else {
+            metronome.stop();
+            metronome = undefined;
+            $(this)
+              .removeClass("btn-danger")
+              .addClass("btn-success")
+              .text("START METRONOME");
+          }
+        });
+      });
+      $("#toggleAutoBtn").click(async function () {
+        if (isListening) {
+          recognition.stop();
+          isListening = !isListening;
+          if (metronome) {
+            $("#toggleMetronome").click();
+          }
+          if (randomImageTimeout) {
+            clearTimeout(randomImageTimeout)
+          }
+          $(this).text("START AUTO");
+        } else {
+          recognition.start();
+          isListening = !isListening;
+          for (let i = 5; i >= 1; i--) {
+            if (!isListening) {
+              return
+            }
+            $(this).text(`START IN ${i}s`);
+            await sleep(1000);
+          }
+
+          $(this).text("STOP AUTO");
+
+          if (!speak) {
+            $("#toggleSound").click();
+          }
+          $("#randomImage").click();
+          await sleep(2500);
+          $("#toggleMetronome").click();
+          await sleep(Math.floor(Math.random() * (15000 - 3000 + 1)) + 3000);
+          $("#main").click();
+          randomImage();
+        }
+      });
+      function randomImage() {
+        randomImageTimeout = setTimeout(() => {
+          if (!isListening) {
+            return
+          }
+          $('#randomImage').click()
+          randomImage()
+        }, Math.floor(Math.floor(Math.random() * (60000 - 10000 + 1)) + 10000))
+      }
+      function cleanAnswer(answer) {
+        // Math
+        const match = answer.match(/^(-?\d+)\s*\(/);
+        if (match) {
+          return match[1];
+        }
+        // Backward
+        const regex = /^[A-Z]+$/;
+        if (regex.test(answer)) {
+          return answer.split("").join(" . : ; ");
+        }
+        return answer;
+      }
+      function sleep(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+      }
+      function speakRandomImage() {
+        const images = ["SQUARE", "CIRCLE", "TRIANGLE"];
+        let image = images[Math.floor(Math.random() * images.length)];
+        while (currentImage === image) {
+          image = images[Math.floor(Math.random() * images.length)];
+        }
+        currentImage = image;
+        speakSentence(image, 0.6);
+        return image;
+      }
+      function getRandomProblem() {
+        speakRate = 0.7;
+        const problemFunctions = [
+          () => generateMultiplicationCalculationProblem(80, 20),
+          () => generateTimeCalculationProblem(),
+          () => generateDivisionCalculationProblem(150, 9),
+          () => generateBackwardSpellingProblem(),
+        ];
+        problem =
+          problemFunctions[
+            Math.floor(Math.random() * problemFunctions.length)
+          ]();
+        $("#question").text(problem.q);
+        $("#answer").text(problem.a);
+        if (speak) {
+          speakSentence(problem.q);
+        }
+        return problem;
+      }
+      function generateTimeCalculationProblem() {
+        const now = Math.floor(Math.random() * 1440);
+        const hour = Math.floor(now / 60);
+        const minute = now % 60;
+        const timeText = convertToAmPm(
+          hour.toString().padStart(2, "0") +
+            ":" +
+            minute.toString().padStart(2, "0")
+        );
+        const longText = timeToWords(timeText);
+        const minutesToAdd =
+          (Math.floor(Math.random() * (300 - 10 + 1)) + 10) *
+          (Math.floor(Math.random() * 2) === 0 ? 1 : -1);
+        const answer = addMinutesToTime(timeText, minutesToAdd);
+        const questionTemplates = [
+          `now it's ${longText}. What time ${
+            minutesToAdd < 0 ? "was" : "is"
+          } the ${minutesToAdd < 0 ? "last" : "next"} ${numberToWords(
+            Math.abs(minutesToAdd)
+          )} minutes?`,
+          `${longText}, ${minutesToAdd < 0 ? "minus" : "plus"} ${numberToWords(
+            Math.abs(minutesToAdd)
+          )} minutes`,
+          `${minutesToAdd < 0 ? "substract" : "add"} ${numberToWords(
+            Math.abs(minutesToAdd)
+          )} minutes, ${minutesToAdd < 0 ? "from" : "to"} ${longText}`,
+        ];
+        return {
+          q: capitalizeFirstLetter(
+            questionTemplates[
+              Math.floor(Math.random() * questionTemplates.length)
+            ]
+          ),
+          a: answer,
+        };
+      }
+      function generateBackwardSpellingProblem() {
+        const words = [
+          "AIRPORT",
+          "RUNWAY",
+          "COCKPIT",
+          "FUSELAGE",
+          "TURBINE",
+          "JETSTREAM",
+          "CONTROL",
+          "AVIONICS",
+          "PILOT",
+          "TOWER",
+          "RADAR",
+          "TURBULENCE",
+          "ALTITUDE",
+          "FLIGHT",
+          "LANDING",
+          "TAKEOFF",
+          "HEADING",
+          "NAVIGATION",
+          "CHART",
+          "APPROACH",
+          "DEPARTURE",
+          "EMERGENCY",
+          "SEATBELT",
+          "SPEED",
+          "WINGS",
+          "ENGINE",
+          "THRUST",
+          "PROPELLER",
+          "TAXI",
+          "CARGO",
+          "AIRCRAFT",
+          "ROTOR",
+          "AVIATION",
+          "PUSHBACK",
+          "RUNWAY",
+          "FLAPS",
+          "STABILIZER",
+          "VECTOR",
+          "ELEVATOR",
+          "CARGO",
+          "FLIGHTPATH",
+          "WINGSPAN",
+          "AERODYNAMICS",
+        ];
+        const selected = words[Math.floor(Math.random() * words.length)];
+        const answer = selected.split("").reverse().join("");
+        return { q: `Spell "${selected}" backward`, a: answer };
+      }
+      function generateDivisionCalculationProblem(maxDividend, maxDivisor) {
+        let divisor = Math.floor(Math.random() * maxDivisor) + 1;
+        let dividend =
+          Math.floor(Math.random() * (maxDividend / divisor)) * divisor;
+        const addition =
+          (Math.floor(Math.random() * (80 - 5 + 1)) + 5) *
+          (Math.floor(Math.random() * 2) === 0 ? 1 : -1);
+        const answer = dividend / divisor + addition;
+        return {
+          q: `${capitalizeFirstLetter(
+            numberToWords(dividend)
+          )} divided by ${numberToWords(divisor)}, ${
+            addition < 0 ? "minus" : "plus"
+          } ${numberToWords(Math.abs(addition))}`,
+          a: `${answer} (${numberToWords(answer)})`,
+        };
+      }
+      function generateMultiplicationCalculationProblem(
+        maxMultiplier1,
+        maxMultiplier2
+      ) {
+        const minMultiplier = 3;
+        const multiplier1 =
+          Math.floor(Math.random() * (maxMultiplier1 - minMultiplier + 1)) +
+          minMultiplier;
+        const multiplier2 =
+          Math.floor(Math.random() * (maxMultiplier2 - minMultiplier + 1)) +
+          minMultiplier;
+        const addition =
+          (Math.floor(Math.random() * (80 - 5 + 1)) + 5) *
+          (Math.floor(Math.random() * 2) === 0 ? 1 : -1);
+        const answer = multiplier1 * multiplier2 + addition;
+        const questionTemplates = [
+          `${numberToWords(multiplier1)} times ${numberToWords(multiplier2)}, ${
+            addition < 0 ? "minus" : "plus"
+          } ${numberToWords(Math.abs(addition))}`,
+          `${numberToWords(multiplier1)} multiplied by ${numberToWords(
+            multiplier2
+          )}, ${addition < 0 ? "minus" : "plus"} ${numberToWords(
+            Math.abs(addition)
+          )}`,
+        ];
+        return {
+          q: capitalizeFirstLetter(
+            questionTemplates[
+              Math.floor(Math.random() * questionTemplates.length)
+            ]
+          ),
+          a: `${answer} (${numberToWords(answer)})`,
+        };
+      }
+      function capitalizeFirstLetter(sentence) {
+        if (sentence.length === 0) return sentence;
+        return sentence.charAt(0).toUpperCase() + sentence.slice(1);
+      }
+      function convertToAmPm(time) {
+        let [hours, minutes] = time.split(":").map(Number);
+        let period = hours >= 12 ? "PM" : "AM";
+        hours = hours % 12 || 12;
+        return `${hours}:${minutes.toString().padStart(2, "0")} ${period}`;
+      }
+      function addMinutesToTime(time, minutesToAdd) {
+        let [timePart, period] = time.split(" ");
+        let [hours, minutes] = timePart.split(":").map(Number);
+        if (period === "PM" && hours !== 12) {
+          hours += 12;
+        }
+        if (period === "AM" && hours === 12) {
+          hours = 0;
+        }
+        let totalMinutes = hours * 60 + minutes + minutesToAdd;
+        if (totalMinutes < 0) {
+          totalMinutes = (1440 + totalMinutes) % 1440;
+        }
+        let newHours = Math.floor(totalMinutes / 60) % 24;
+        let newMinutes = totalMinutes % 60;
+        period = newHours >= 12 ? "PM" : "AM";
+        newHours = newHours % 12 || 12;
+        newMinutes = newMinutes.toString().padStart(2, "0");
+        return `${newHours
+          .toString()
+          .padStart(2, "0")}:${newMinutes} ${period}`;
+      }
+      function timeToWords(time) {
+        const numbers = [
+          "twelve",
+          "one",
+          "two",
+          "three",
+          "four",
+          "five",
+          "six",
+          "seven",
+          "eight",
+          "nine",
+          "ten",
+          "eleven",
+        ];
+        const specialCases = { 15: "a quarter", 30: "half" };
+        let [timePart, period] = time.split(" ");
+        let [hours, minutes] = timePart.split(":").map(Number);
+        period = period.toUpperCase();
+        let hourWord = numbers[hours % 12];
+        let nextHourWord = numbers[(hours % 12) + 1] || numbers[0];
+        if (minutes === 0) {
+          return `${hourWord} ${period}`;
+        } else if (minutes === 15 || minutes === 30 || minutes === 45) {
+          let prefix = specialCases[minutes] || `${60 - minutes}`;
+          let direction =
+            minutes === 30 ? "past" : minutes < 30 ? "past" : "to";
+          return `${prefix} ${direction} ${
+            minutes < 30 ? hourWord : nextHourWord
+          } ${period}`;
+        } else {
+          let minutesWord = minutes <= 30 ? `${minutes}` : `${60 - minutes}`;
+          let direction = minutes <= 30 ? "past" : "to";
+          return `${numberToWords(minutesWord)} minutes ${direction} ${
+            minutes <= 30 ? hourWord : nextHourWord
+          } ${period}`;
+        }
+      }
+      function numberToWords(num) {
+        if (num === 0) return "zero";
+        const ones = [
+          "",
+          "one",
+          "two",
+          "three",
+          "four",
+          "five",
+          "six",
+          "seven",
+          "eight",
+          "nine",
+        ];
+        const teens = [
+          "",
+          "eleven",
+          "twelve",
+          "thirteen",
+          "fourteen",
+          "fifteen",
+          "sixteen",
+          "seventeen",
+          "eighteen",
+          "nineteen",
+        ];
+        const tens = [
+          "",
+          "ten",
+          "twenty",
+          "thirty",
+          "forty",
+          "fifty",
+          "sixty",
+          "seventy",
+          "eighty",
+          "ninety",
+        ];
+        const thousands = ["", "thousand", "million", "billion"];
+        function convertToWords(n) {
+          if (n === 0) return "";
+          if (n < 10) return ones[n];
+          if (n >= 11 && n <= 19) return teens[n - 10];
+          if (n >= 10 && n < 100) {
+            return (
+              tens[Math.floor(n / 10)] +
+              (n % 10 !== 0 ? " " + ones[n % 10] : "")
+            );
+          }
+          if (n >= 100 && n < 1000) {
+            return (
+              ones[Math.floor(n / 100)] +
+              " hundred" +
+              (n % 100 !== 0 ? " " + convertToWords(n % 100) : "")
+            );
+          }
+          let thousandIndex = 0;
+          let word = "";
+          while (n > 0) {
+            if (n % 1000 !== 0) {
+              word =
+                convertToWords(n % 1000) +
+                " " +
+                thousands[thousandIndex] +
+                (word ? " " + word : "");
+            }
+            n = Math.floor(n / 1000);
+            thousandIndex++;
+          }
+          return word.trim();
+        }
+        const sign = num < 0 ? "minus " : "";
+        return sign + convertToWords(Math.abs(num));
+      }
+      function speakSentence(sentence, rate = 0.7) {
+        isSpeaking = true;
+        return new Promise((resolve, reject) => {
+          if ("speechSynthesis" in window) {
+            const utterance = new SpeechSynthesisUtterance(sentence);
+            utterance.voice = speechSynthesis
+              .getVoices()
+              .find((voice) => voice.lang === "en-US");
+            utterance.rate = rate;
+            utterance.pitch = 1;
+            utterance.volume = 0.9;
+
+            // Resolve the promise when the speech ends
+            utterance.onend = () => {
+              isSpeaking = false;
+              return resolve();
+            };
+            // Reject the promise if there is an error
+            utterance.onerror = (e) => {
+              isSpeaking = false;
+              return reject(e);
+            };
+
+            speechSynthesis.speak(utterance);
+          } else {
+            reject(
+              new Error("Text-to-Speech is not supported in your browser.")
+            );
+          }
+        });
+      }
+      function validateNumberFormat(input) {
+        const regex = /^(\d{2,3})(?:-(\d{2,3}))?$/;
+        const match = input.match(regex);
+        if (!match) {
+          return !1;
+        }
+        const number1 = parseInt(match[1], 10);
+        const number2 = match[2] ? parseInt(match[2], 10) : null;
+        if (number1 < 30 || number1 > 300) {
+          return !1;
+        }
+        if (number2 !== null) {
+          if (number2 < 30 || number2 > 300) {
+            return !1;
+          }
+          if (number2 < number1) {
+            return !1;
+          }
+        }
+        return !0;
+      }
+      function setupSpeechRecognition(targetText, callback) {
+        // Check if the browser supports the Web Speech API
+        if (!("webkitSpeechRecognition" in window)) {
+          alert("Sorry, your browser doesn't support speech recognition.");
+          return;
+        }
+
+        // On result event
+        recognition.onresult = function (event) {
+          // Get the latest result
+          const currentIndex = event.resultIndex;
+          const speechResult = event.results[currentIndex][0].transcript.trim();
+          console.log("Speech recognized: ", speechResult);
+
+          // Add your comparison logic here
+          if (speechResult.toLowerCase() === targetText.toLowerCase()) {
+            callback();
+          }
+        };
+
+        // Error handling
+        recognition.onerror = function (event) {
+          console.error("Speech recognition error", event.error);
+        };
+
+        // End event
+        recognition.onend = function () {
+          if (isListening) {
+            recognition.start(); // Restart listening if manually stopped
+          }
+        };
+      }
+      class Metronome {
+        constructor(minBpm, maxBpm) {
+          this.audioContext = null;
+          this.currentBpm = null;
+          this.isPlaying = !1;
+          this.intervalId = null;
+          this.minBpm = minBpm;
+          this.maxBpm = maxBpm;
+          this.timeout = undefined;
+        }
+        initialize() {
+          this.audioContext = new (window.AudioContext ||
+            window.webkitAudioContext)();
+          this.randomBpm();
+        }
+        randomBpm() {
+          if (this.minBpm === this.maxBpm) {
+            this.currentBpm = this.minBpm;
+            return;
+          }
+          this.setBpm(
+            Math.floor(Math.random() * (this.maxBpm - this.minBpm + 1)) +
+              this.minBpm
+          );
+        }
+        createTickSound() {
+          const oscillator = this.audioContext.createOscillator();
+          const gainNode = this.audioContext.createGain();
+          oscillator.connect(gainNode);
+          gainNode.connect(this.audioContext.destination);
+          oscillator.frequency.value = 1000;
+          gainNode.gain.value = 1;
+          gainNode.gain.exponentialRampToValueAtTime(
+            0.001,
+            this.audioContext.currentTime + 0.05
+          );
+          oscillator.start();
+          oscillator.stop(this.audioContext.currentTime + 0.05);
+        }
+        start() {
+          if (!this.audioContext) {
+            this.initialize();
+          }
+          if (this.isPlaying) return;
+          this.isPlaying = !0;
+          const intervalMs = (60 / this.currentBpm) * 1000;
+          this.createTickSound();
+          this.intervalId = setInterval(() => {
+            this.createTickSound();
+          }, intervalMs);
+        }
+        setMetronomeTimeout(timeout) {
+          this.timeout = timeout;
+        }
+        clearMetronomeTimeout() {
+          clearTimeout(this.timeout);
+        }
+        stop() {
+          if (!this.isPlaying) return;
+          clearInterval(this.intervalId);
+          this.isPlaying = !1;
+          this.clearMetronomeTimeout();
+        }
+        async setBpm(bpm) {
+          if (bpm < 30 || bpm > 300) {
+            throw new Error("BPM must be between 30 and 300");
+          }
+          this.currentBpm = bpm;
+          if (this.isPlaying) {
+            this.stop();
+            await new Promise((r) => setTimeout(r, 900));
+            this.start();
+            this.setMetronomeTimeout(
+              setTimeout(
+                () => this.randomBpm(),
+                (Math.floor(Math.random() * (15 - 5 + 1)) + 5) * 1000
+              )
+            );
+          }
+        }
+        getCurrentBpm() {
+          return this.currentBpm;
+        }
+        isActive() {
+          return this.isActive;
+        }
+      }
+    </script>
+  </body>
+</html>
