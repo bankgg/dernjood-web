@@ -96,12 +96,12 @@
       recognition.lang = "en-US";
       let isListening = false;
       let isSpeaking = false;
-      let randomImageTimeout
+      let randomImageTimeout;
 
       $(document).ready(async function () {
         setupSpeechRecognition("next", async function () {
           await speakSentence("The answer is: ");
-          await sleep(1000);
+          await sleep(800);
           await speakSentence(cleanAnswer($("#answer").text()), 0.5);
           await sleep(Math.floor(Math.random() * (15000 - 3000 + 1)) + 3000);
           await speakSentence("Next question");
@@ -192,7 +192,7 @@
             $("#toggleMetronome").click();
           }
           if (randomImageTimeout) {
-            clearTimeout(randomImageTimeout)
+            clearTimeout(randomImageTimeout);
           }
           $(this).text("START AUTO");
         } else {
@@ -200,7 +200,7 @@
           isListening = !isListening;
           for (let i = 5; i >= 1; i--) {
             if (!isListening) {
-              return
+              return;
             }
             $(this).text(`START IN ${i}s`);
             await sleep(1000);
@@ -213,20 +213,24 @@
           }
           $("#randomImage").click();
           await sleep(2500);
-          $("#toggleMetronome").click();
+          if (!metronome) {
+            $("#toggleMetronome").click();
+          }
           await sleep(Math.floor(Math.random() * (15000 - 3000 + 1)) + 3000);
-          $("#main").click();
+          if (isListening) {
+            $("#main").click();
+          }
           randomImage();
         }
       });
       function randomImage() {
         randomImageTimeout = setTimeout(() => {
           if (!isListening) {
-            return
+            return;
           }
-          $('#randomImage').click()
-          randomImage()
-        }, Math.floor(Math.floor(Math.random() * (60000 - 10000 + 1)) + 10000))
+          $("#randomImage").click();
+          randomImage();
+        }, Math.floor(Math.floor(Math.random() * (60000 - 10000 + 1)) + 10000));
       }
       function cleanAnswer(answer) {
         // Math
