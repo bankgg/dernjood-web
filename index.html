@@ -471,17 +471,36 @@
           return `${hourWord} ${period}`;
         } else if (minutes === 15 || minutes === 30 || minutes === 45) {
           let prefix = specialCases[minutes] || `${60 - minutes}`;
-          let direction =
-            minutes === 30 ? "past" : minutes < 30 ? "past" : "to";
+          let direction = minutes === 30 ? "to" : minutes < 30 ? "past" : "to";
+          // Determine the correct period for display:
+          // If direction is "to" and current hour (in 12-hour format) is 11,
+          // then the upcoming hour is 12, whose period is the opposite.
+          let displayPeriod = period;
+          if (direction === "to" && hours % 12 === 11) {
+            displayPeriod = period === "AM" ? "PM" : "AM";
+          }
           return `${prefix} ${direction} ${
             minutes < 30 ? hourWord : nextHourWord
-          } ${period}`;
+          } ${displayPeriod}`;
         } else {
           let minutesWord = minutes <= 30 ? `${minutes}` : `${60 - minutes}`;
           let direction = minutes <= 30 ? "past" : "to";
+          // Calculate the current hour in 24-hour format
+          let currentHour24 =
+            period === "AM"
+              ? hours === 12
+                ? 0
+                : hours
+              : hours === 12
+              ? 12
+              : hours + 12;
+          // Next hour in 24-hour format
+          let nextHour24 = (currentHour24 + 1) % 24;
+          // Determine the correct period for the next hour
+          let nextPeriod = nextHour24 >= 12 ? "PM" : "AM";
           return `${numberToWords(minutesWord)} minutes ${direction} ${
             minutes <= 30 ? hourWord : nextHourWord
-          } ${period}`;
+          } ${minutes > 30 ? nextPeriod : period}`;
         }
       }
       function numberToWords(num) {
